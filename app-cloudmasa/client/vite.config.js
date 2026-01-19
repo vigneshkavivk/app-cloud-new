@@ -14,11 +14,14 @@ export default defineConfig({
   assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.svg', '**/*.gif'],
 
   server: {
-    host: 'localhost',
+    host: '0.0.0.0',
     port: 5173,
     strictPort: true,
     hmr: {
-      clientPort: 5173,
+      // 🔑 Critical: Let HMR use current host/port (no hardcoded 5173)
+      clientPort: 443,
+      protocol: 'wss',
+      host: 'app.cloudmasa.com',
       overlay: false,
     },
     proxy: {
