@@ -19,6 +19,7 @@ import GcpClustersPage from "./components/clusters/GcpClustersPage";
 // Other pages...
 import NotificationsPage from "./components/NotificationsPage";
 import ClusterConfigPage from "./components/ClusterConfigPage";
+import AuthCallback from "./components/AuthCallback";
 
 // Sidebar Layout Pages
 import Sidebar from "./components/Sidebar";
