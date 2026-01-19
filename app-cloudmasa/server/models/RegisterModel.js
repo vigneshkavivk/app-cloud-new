@@ -1,31 +1,43 @@
 // server/models/RegisterModel.js
 import mongoose from 'mongoose';
 
-// ❌ Remove the hardcoded ALLOWED_ROLES array
-// const ALLOWED_ROLES = ['super-admin', 'admin', 'user', 'developer', 'devops', 'guest', 'viewer', 'tester'];
-
 const registerSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  githubToken: { type: String }, 
-  password: { type: String, required: true },
-  // ✅ Remove the enum constraint - allow any string value for role
-  role: {
+  email: { type: String, required: true, unique: true, lowercase: true },
+
+  // OAuth fields
+  googleId: { type: String, sparse: true }, // Optional; for Google SSO
+  githubToken: { type: String },            // Optional; for GitHub integration
+  provider: { 
+    type: String, 
+    enum: ['email', 'google', 'github'],   // Optional: restrict to known providers
+    default: 'email' 
+  },
+
+  // Password (required only for non-OAuth accounts)
+  password: {
     type: String,
-    // enum: ALLOWED_ROLES, // ❌ Removed
-    default: 'user'
+    required: function () {
+      return this.provider === 'email';
+    }
   },
-  // ✅ ADD THESE TWO FIELDS FOR ACTIVITY TRACKING
-  lastActive: {
-    type: Date,
-    default: null
+
+  // Role system (flexible, no enum)
+  role: { 
+    type: String, 
+    default: 'user' 
   },
-  isActive: {
-    type: Boolean,
-    default: false
-  },
-  createdAt: { type: Date, default: Date.now },
+
+  // Activity tracking
+  lastActive: { type: Date, default: null },
+  isActive: { type: Boolean, default: false },
+
+  // Timestamp
+  createdAt: { type: Date, default: Date.now }
 });
+
+// Ensure uniqueness for OAuth IDs (optional but recommended)
+registerSchema.index({ googleId: 1 }, { sparse: true, unique: true });
 
 const Register = mongoose.model('Register', registerSchema);
 export default Register;
