@@ -3,10 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Terminal, { TerminalOutput, TerminalInput } from "react-terminal-ui";
 import { ServerCog, X, Lock } from "lucide-react";
 import io from "socket.io-client";
-import { __API_URL__ } from "../config/env.config";
 import { useAuth } from "../hooks/useAuth";
-
-const socket = io(`${__API_URL__}`);
 
 const ArgoTerminal = ({
   onClose,
@@ -16,34 +13,38 @@ const ArgoTerminal = ({
   repoUrl,
   selectedFolder,
   gitHubUsername,
-  gitHubToken
+  gitHubToken,
 }) => {
   const { hasPermission } = useAuth();
   const canUseArgoTerminal = hasPermission('Agent', 'Provision') && hasPermission('Credentials', 'View');
 
-  if (!canUseArgoTerminal) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-        <div className="bg-gray-950 rounded-xl border border-gray-800 shadow-2xl max-w-md w-full mx-auto p-6 text-center">
-          <Lock className="h-12 w-12 mx-auto text-red-500 mb-4" />
-          <h3 className="text-xl font-bold text-red-400 mb-2">Access Denied</h3>
-          <p className="text-gray-300">
-            You need <span className="font-mono">Agent.Provision</span> and <span className="font-mono">Credentials.View</span> permissions.
-          </p>
-          <button onClick={onClose} className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
-            Close
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // ✅ Socket management via ref
+  const socketRef = useRef(null);
 
+  // UI state
   const [terminalLines, setTerminalLines] = useState([]);
   const [isCommandRunning, setIsCommandRunning] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [argocdIp, setArgocdIp] = useState("");
   const [argocdPassword, setArgocdPassword] = useState("");
   const terminalEndRef = useRef(null);
+
+  // Initialize socket on mount
+  useEffect(() => {
+    const socket = io({
+      path: '/socket.io',
+      transports: ['websocket', 'polling'],
+    });
+    socketRef.current = socket;
+
+    // Cleanup on unmount
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.close();
+        socketRef.current = null;
+      }
+    };
+  }, []); // Runs once on mount
 
   const addTerminalOutput = (text, isError = false) => {
     setTerminalLines((prev) => [
@@ -63,6 +64,13 @@ const ArgoTerminal = ({
 
       setIsCommandRunning(true);
       addTerminalOutput(`$ ${command}`);
+
+      const socket = socketRef.current;
+      if (!socket) {
+        addTerminalOutput("Socket not connected", true);
+        setIsCommandRunning(false);
+        return reject(new Error("Socket not connected"));
+      }
 
       socket.emit("command", command.trim());
 
@@ -128,31 +136,37 @@ const ArgoTerminal = ({
     });
   };
 
+  // Global socket listeners (safe: cleaned up per command + here)
   useEffect(() => {
-    const handleSocketOutput = (data) => {
+    const socket = socketRef.current;
+    if (!socket) return;
+
+    const handleOutput = (data) => {
       setIsCommandRunning(false);
       const isError = data.toLowerCase().includes("error");
       addTerminalOutput(data, isError);
     };
 
-    const handleSocketError = (error) => {
+    const handleError = (error) => {
       setIsCommandRunning(false);
       addTerminalOutput(`Command failed: ${error}`, true);
     };
 
-    socket.on("output", handleSocketOutput);
-    socket.on("command_error", handleSocketError);
+    socket.on("output", handleOutput);
+    socket.on("command_error", handleError);
 
     return () => {
-      socket.off("output", handleSocketOutput);
-      socket.off("command_error", handleSocketError);
+      socket.off("output", handleOutput);
+      socket.off("command_error", handleError);
     };
   }, []);
 
+  // Scroll to bottom on new output
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [terminalLines]);
 
+  // Auto-run setup on first valid props
   useEffect(() => {
     const runInitCommands = async () => {
       if (
@@ -160,8 +174,7 @@ const ArgoTerminal = ({
         !selectedCluster ||
         !selectedAccount?.awsRegion ||
         !namespace
-      )
-        return;
+      ) return;
 
       setHasInitialized(true);
 
@@ -304,10 +317,7 @@ const ArgoTerminal = ({
       return;
     }
 
-    // Normalize the repo URL (remove trailing .git if present)
     const normalizedRepoUrl = repoUrl.replace(/\.git$/, "");
-
-    // Add repo with upsert flag
     const repoAddCmd = `argocd repo add ${normalizedRepoUrl} --username ${gitHubUsername} --password ${gitHubToken} --upsert`;
 
     setTerminalLines((prev) => [
@@ -322,15 +332,14 @@ const ArgoTerminal = ({
           return;
         }
 
-        // Split selectedFolder: should be like "tools/checkov"
         const parts = selectedFolder.split("/");
         if (parts.length < 2) {
           addTerminalOutput("Invalid selectedFolder format. Expected 'repoName/folderName'", true);
           return;
         }
 
-        const folderName = parts[1]; // folder within the repo
-        const appName = folderName.toLowerCase(); // enforce lowercase for RFC 1123
+        const folderName = parts[1];
+        const appName = folderName.toLowerCase();
 
         const appCreateCmd = `argocd app create ${appName} --repo ${normalizedRepoUrl} --path ${folderName} --dest-server https://kubernetes.default.svc --dest-namespace ${namespace}`;
         setTerminalLines((prev) => [
@@ -345,6 +354,27 @@ const ArgoTerminal = ({
         addTerminalOutput(`Failed: ${error}`, true);
       });
   };
+
+  // Render permission-denied modal if needed
+  if (!canUseArgoTerminal) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="bg-gray-950 rounded-xl border border-gray-800 shadow-2xl max-w-md w-full mx-auto p-6 text-center">
+          <Lock className="h-12 w-12 mx-auto text-red-500 mb-4" />
+          <h3 className="text-xl font-bold text-red-400 mb-2">Access Denied</h3>
+          <p className="text-gray-300">
+            You need <span className="font-mono">Agent.Provision</span> and <span className="font-mono">Credentials.View</span> permissions.
+          </p>
+          <button
+            onClick={onClose}
+            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
