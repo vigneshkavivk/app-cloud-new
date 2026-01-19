@@ -58,6 +58,23 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 };
 
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'cloudmasa-session-secret-please-change-in-prod',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: (process.env.NODE_ENV === 'production'),
+    httpOnly: true,
+    sameSite: 'lax'
+  }
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Configure OAuth strategies (MUST come after session & initialize)
+configurePassport(passport);
+
 app.use(cors(corsOptions));
 
 app.use(express.json({ limit: '10mb' }));
