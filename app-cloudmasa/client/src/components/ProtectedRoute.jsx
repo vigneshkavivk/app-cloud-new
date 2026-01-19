@@ -1,90 +1,82 @@
+// src/components/ProtectedRoute.js
 import React from "react";
-import { Navigate, useLocation  } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth"; // ✅ RBAC hook (primary source)
-
-/**
- * 🔐 ProtectedRoute Components
- *
- * This file provides multiple route protection strategies:
- *
- * 1. `ProtectedRoute`        → Basic authentication (default export)
- * 2. `PermissionProtectedRoute` → RBAC by permission (e.g., 'Job.Create')
- * 3. `RoleProtectedRoute`    → RBAC by exact role (e.g., 'super-admin')
- * 4. `CustomProtectedRoute`  → Dynamic custom logic
- */
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
 /**
  * 🔒 Fallback Auth Checker (uses localStorage if hook fails)
- * @returns {{ isAuthenticated: boolean, role: string | null, token: string | null }}
+ * Handles both full user objects and token-only (e.g., Google SSO)
  */
 const getAuthFallback = () => {
   try {
+    const token = localStorage.getItem("token");
     const userStr = localStorage.getItem("user");
+
+    // ✅ Google SSO case: token exists but no full user object yet
+    if (token && !userStr) {
+      return {
+        isAuthenticated: true,
+        role: "guest", // temporary until /profile loads
+        token
+      };
+    }
+
     if (!userStr) {
       return { isAuthenticated: false, role: null, token: null };
     }
+
     const user = JSON.parse(userStr);
-    const token = user?.token || null;
-    const role = user?.role || null;
     return {
-      isAuthenticated: !!token,
-      role,
-      token
+      isAuthenticated: !!user?.token,
+      role: user?.role || null,
+      token: user?.token || null
     };
   } catch (err) {
-    console.warn("Failed to parse user from localStorage:", err);
+    console.warn("Failed to parse auth from localStorage:", err);
     return { isAuthenticated: false, role: null, token: null };
   }
 };
 
 /**
- * 🛡️ Option 1: Universal Protection (Authentication Only)
- * 
- * Redirects unauthenticated users to login.
- * Used for pages that only require login (no RBAC).
- * 
- * @param {React.ReactNode} children - Protected content
- * @returns {JSX.Element}
+ * 🧠 Route Persistence Hook
+ * Saves last visited route for authenticated users (excluding auth pages)
  */
-// Add this function before the main ProtectedRoute component
 const useRoutePersistence = (locationPath) => {
   React.useEffect(() => {
-    // Save current route when it changes
-    const currentPath = locationPath;
-    localStorage.setItem('lastVisitedRoute', currentPath);
+    // Save current route on every change
+    localStorage.setItem('lastVisitedRoute', locationPath);
   }, [locationPath]);
 
   React.useEffect(() => {
-    // On component mount, restore route if needed
+    // On mount, restore route if needed
     const lastRoute = localStorage.getItem('lastVisitedRoute');
-    
-    // Only restore if we have a saved route and we're not on auth pages
-    if (lastRoute && 
-        !['/', '/login', '/register'].includes(locationPath) &&
-        !locationPath.startsWith('/dashboard/') &&
-        !locationPath.startsWith('/clusters/create')) {
-      
+    if (
+      lastRoute &&
+      !['/', '/login', '/register'].includes(locationPath) &&
+      !locationPath.startsWith('/dashboard/') &&
+      !locationPath.startsWith('/clusters/create')
+    ) {
       const currentPathWithoutQuery = locationPath.split('?')[0];
       const lastRouteWithoutQuery = lastRoute.split('?')[0];
-      
-      // Don't redirect if already on the same route
       if (currentPathWithoutQuery !== lastRouteWithoutQuery) {
-        // Use window.location to force redirect (bypass React Router cache)
-        window.location.href = lastRoute;
+        window.location.href = lastRoute; // Full reload to bypass router cache
       }
     }
   }, [locationPath]);
 };
+
+/**
+ * 🛡️ Option 1: Basic Authentication Protection (Default Export)
+ */
 const ProtectedRoute = ({ children }) => {
-  const location = useLocation(); 
+  const location = useLocation();
   let isAuthenticated = false;
   let fallbackUsed = false;
 
   try {
-    const auth = useAuth();
-    isAuthenticated = auth.isAuthenticated;
+    const { isAuthenticated: authStatus } = useAuth();
+    isAuthenticated = authStatus;
   } catch (err) {
-    // Fallback to localStorage if context is unavailable
     const fallback = getAuthFallback();
     isAuthenticated = fallback.isAuthenticated;
     fallbackUsed = true;
@@ -94,26 +86,17 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-  return <Navigate to="/" replace />;
-}
+    return <Navigate to="/" replace />;
+  }
 
-// Apply route persistence for authenticated users
-useRoutePersistence(location.pathname + location.search);
+  // Enable route persistence for authenticated users
+  useRoutePersistence(location.pathname + location.search);
 
-return <>{children}</>;
+  return <>{children}</>;
 };
 
 /**
  * 🔑 Option 2: Permission-Based Protection (Recommended)
- * 
- * Example usage:
- *   <PermissionProtectedRoute permission="Job.Create">
- *     <DeploymentPage />
- *   </PermissionProtectedRoute>
- * 
- * @param {React.ReactNode} children - Protected content
- * @param {string} permission - Dot-separated permission (e.g., 'Job.Create')
- * @returns {JSX.Element}
  */
 const PermissionProtectedRoute = ({ children, permission }) => {
   let isAuthenticated = false;
@@ -127,15 +110,13 @@ const PermissionProtectedRoute = ({ children, permission }) => {
       const [resource, action] = permission.split('.');
       hasAccess = hasPermission(resource, action);
     } else if (isAuthenticated) {
-      hasAccess = true; // No permission required → just auth
+      hasAccess = true;
     }
   } catch (err) {
-    // Fallback to localStorage + basic role check
     const fallback = getAuthFallback();
     isAuthenticated = fallback.isAuthenticated;
     fallbackUsed = true;
     if (isAuthenticated) {
-      // Without RBAC engine, only super-admin gets access
       hasAccess = fallback.role === 'super-admin' || !permission;
     }
     if (process.env.NODE_ENV === 'development') {
@@ -155,16 +136,7 @@ const PermissionProtectedRoute = ({ children, permission }) => {
 };
 
 /**
- * 👑 Option 3: Role-Based Protection (Legacy / Exact Match)
- * 
- * Example usage:
- *   <RoleProtectedRoute requiredRole="super-admin">
- *     <PoliciesPage />
- *   </RoleProtectedRoute>
- *
- * @param {React.ReactNode} children - Protected content
- * @param {string} requiredRole - Exact role name (e.g., 'super-admin')
- * @returns {JSX.Element}
+ * 👑 Option 3: Role-Based Protection (Exact Match)
  */
 const RoleProtectedRoute = ({ children, requiredRole }) => {
   let isAuthenticated = false;
@@ -198,15 +170,6 @@ const RoleProtectedRoute = ({ children, requiredRole }) => {
 
 /**
  * 🧩 Option 4: Custom Protection (Dynamic Logic)
- * 
- * Example usage:
- *   <CustomProtectedRoute check={() => userOrg === 'CloudMasa-Tech'}>
- *     <InternalTools />
- *   </CustomProtectedRoute>
- * 
- * @param {React.ReactNode} children - Protected content
- * @param {() => boolean} check - Custom access function
- * @returns {JSX.Element}
  */
 const CustomProtectedRoute = ({ children, check }) => {
   let isAuthenticated = false;
@@ -220,7 +183,7 @@ const CustomProtectedRoute = ({ children, check }) => {
     isAuthenticated = fallback.isAuthenticated;
     fallbackUsed = true;
     if (process.env.NODE_ENV === 'development') {
-      console.warn("CustomProtectedRoute: useAuth() failed. Using localStorage fallback (auth only).");
+      console.warn("CustomProtectedRoute: useAuth() failed. Using localStorage fallback.");
     }
   }
 
@@ -236,9 +199,7 @@ const CustomProtectedRoute = ({ children, check }) => {
 };
 
 /**
- * 🚨 No Access Inline Component (Optional)
- * 
- * Use this if you prefer to show a message instead of redirecting.
+ * 🚨 Inline Access Denied Component
  */
 export const NoAccessComponent = ({ requiredPermission = "N/A" }) => {
   return (
@@ -259,41 +220,17 @@ export const NoAccessComponent = ({ requiredPermission = "N/A" }) => {
   );
 };
 
-/**
- * 📚 Usage Examples (for documentation)
- */
+// 📚 Usage Examples (commented out – for reference only)
 /*
-// 1. Basic auth
-<Route path="/dashboard" element={
-  <ProtectedRoute>
-    <Dashboard />
-  </ProtectedRoute>
-} />
-// 2. Permission-based
-<Route path="/deploy" element={
-  <PermissionProtectedRoute permission="Job.Create">
-    <DeployPage />
-  </PermissionProtectedRoute>
-} />
-// 3. Role-based
-<Route path="/policies" element={
-  <RoleProtectedRoute requiredRole="super-admin">
-    <Policies />
-  </RoleProtectedRoute>
-} />
-// 4. Custom logic
-<Route path="/internal" element={
-  <CustomProtectedRoute check={() => org === 'CloudMasa'}>
-    <InternalTools />
-  </CustomProtectedRoute>
-} />
+<Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+<Route path="/deploy" element={<PermissionProtectedRoute permission="Job.Create"><DeployPage /></PermissionProtectedRoute>} />
+<Route path="/policies" element={<RoleProtectedRoute requiredRole="super-admin"><Policies /></RoleProtectedRoute>} />
+<Route path="/internal" element={<CustomProtectedRoute check={() => org === 'CloudMasa'}><InternalTools /></CustomProtectedRoute>} />
 */
 
-// 🔥 RECOMMENDATION: Use PermissionProtectedRoute as your main strategy
-// But for backward compatibility, we keep ProtectedRoute as default
-
+// 🔥 Export
 export default ProtectedRoute;
-export { 
+export {
   PermissionProtectedRoute,
   RoleProtectedRoute,
   CustomProtectedRoute,
