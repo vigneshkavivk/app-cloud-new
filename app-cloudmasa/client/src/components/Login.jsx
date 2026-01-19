@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub, FaGitlab, FaBitbucket } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
@@ -17,7 +17,7 @@ const Login = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  // Example in login handler
+// Example in login handler
   const handleLogin = async () => {
     try {
       const res = await axios.post("/api/auth/login", { email, password });
@@ -34,9 +34,7 @@ const Login = () => {
   };
 
   const handleOAuthLogin = (provider) => {
-    if (loading) return;
-    const redirectUri = `${window.location.origin}/oauth/callback`;
-    window.location.href = `http://localhost:3000/auth/${provider}?redirect_uri=${encodeURIComponent(redirectUri)}`;
+    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/api/auth/${provider}`;
   };
 
   const handleSubmit = async (e) => {
@@ -57,7 +55,7 @@ const Login = () => {
     setError('');
 
     try {
-      const loginRes = await fetch('http://localhost:3000/api/auth/login', {
+      const loginRes = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -99,7 +97,7 @@ const Login = () => {
       localStorage.setItem('user', JSON.stringify(basicUser));
 
       const permissionsRes = await fetch(
-        `http://localhost:3000/api/policies/roles/permissions?role=${encodeURIComponent(user.role)}`,
+        `/api/policies/roles/permissions?role=${encodeURIComponent(user.role)}`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
 
@@ -132,6 +130,8 @@ const Login = () => {
     }
   };
 
+
+
   return (
     <div className="flex min-h-screen flex-col justify-center items-center bg-[#0b1421] px-4 sm:px-6 py-8 relative overflow-hidden">
       {/* Subtle dynamic background (optional accent) */}
@@ -161,10 +161,10 @@ const Login = () => {
           <button
             onClick={() => handleOAuthLogin('google')}
             disabled={loading}
-            className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#161b22] font-medium text-white 
-                      hover:bg-gradient-to-r hover:from-teal-600 hover:via-cyan-700 hover:to-blue-800 
-                      hover:shadow-lg hover:shadow-cyan-500/20 
-                      transition-all duration-300 border border-[#24292f]/50 backdrop-blur-sm"            
+            className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#161b22] font-medium text-white
+                      hover:bg-gradient-to-r hover:from-teal-600 hover:via-cyan-700 hover:to-blue-800
+                      hover:shadow-lg hover:shadow-cyan-500/20
+                      transition-all duration-300 border border-[#24292f]/50 backdrop-blur-sm"
                       aria-label="Sign in with Google"
                       >
             <FcGoogle className="text-xl" /> Google
@@ -174,23 +174,23 @@ const Login = () => {
           <button
             onClick={() => handleOAuthLogin('github')}
             disabled={loading}
-            className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#161b22] font-medium text-white 
-                      hover:bg-gradient-to-r hover:from-teal-600 hover:via-cyan-700 hover:to-blue-800 
-                      hover:shadow-lg hover:shadow-cyan-500/20 
-                      transition-all duration-300 border border-[#24292f]/50 backdrop-blur-sm"             
+            className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#161b22] font-medium text-white
+                      hover:bg-gradient-to-r hover:from-teal-600 hover:via-cyan-700 hover:to-blue-800
+                      hover:shadow-lg hover:shadow-cyan-500/20
+                      transition-all duration-300 border border-[#24292f]/50 backdrop-blur-sm"
                       aria-label="Sign in with GitHub"
           >
             <FaGithub className="text-xl" /> GitHub
           </button>
 
           {/* GitLab — Dark button, orange-red icon */}
-          <button 
+          <button
             onClick={() => handleOAuthLogin('gitlab')}
             disabled={loading}
-            className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#161b22] font-medium text-white 
-                      hover:bg-gradient-to-r hover:from-teal-600 hover:via-cyan-700 hover:to-blue-800 
-                      hover:shadow-lg hover:shadow-cyan-500/20 
-                      transition-all duration-300 border border-[#24292f]/50 backdrop-blur-sm"             
+            className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#161b22] font-medium text-white
+                      hover:bg-gradient-to-r hover:from-teal-600 hover:via-cyan-700 hover:to-blue-800
+                      hover:shadow-lg hover:shadow-cyan-500/20
+                      transition-all duration-300 border border-[#24292f]/50 backdrop-blur-sm"
                       aria-label="Sign in with GitLab"
           >
             <span className="text-orange-500">
@@ -203,10 +203,10 @@ const Login = () => {
           <button
             onClick={() => handleOAuthLogin('bitbucket')}
             disabled={loading}
-            className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#161b22] font-medium text-white 
-                      hover:bg-gradient-to-r hover:from-teal-600 hover:via-cyan-700 hover:to-blue-800 
-                      hover:shadow-lg hover:shadow-cyan-500/20 
-                      transition-all duration-300 border border-[#24292f]/50 backdrop-blur-sm"             
+            className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#161b22] font-medium text-white
+                      hover:bg-gradient-to-r hover:from-teal-600 hover:via-cyan-700 hover:to-blue-800
+                      hover:shadow-lg hover:shadow-cyan-500/20
+                      transition-all duration-300 border border-[#24292f]/50 backdrop-blur-sm"
                       aria-label="Sign in with Bitbucket"
           >
             <span className="text-blue-500">
