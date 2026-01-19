@@ -1,3 +1,4 @@
+// server/controllers/authController.js
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import Register from '../models/RegisterModel.js';
@@ -13,6 +14,7 @@ const generateToken = (userId) => {
   );
 };
 
+// 🔐 Register with invite validation (password only)
 const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -26,28 +28,30 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Email already registered' });
     }
 
-    // ✅ Check for pending invitation
-    const invitation = await InviteUser.findOne({ 
+    // ✅ Validate pending invitation
+    const invitation = await InviteUser.findOne({
       email: email.toLowerCase(),
-      status: 'pending' // Only process pending invites
+      status: 'pending'
     });
 
     if (!invitation) {
-      return res.status(400).json({ 
-        message: 'No pending invitation found for this email. Please get invited first.' 
+      return res.status(400).json({
+        message: 'No pending invitation found. Please get invited first.'
       });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new Register({ 
-      name, 
-      email: email.toLowerCase(), 
+    const newUser = new Register({
+      name,
+      email: email.toLowerCase(),
       password: hashedPassword,
-      role: invitation.role  // ✅ Copy role from invite
+      role: invitation.role,
+      // Optional: mark as SSO=false
+      isSSO: false
     });
     await newUser.save();
 
-    // ✅ Add user to workspace
+    // ✅ Add to workspace
     const workspace = await Workspace.findById(invitation.workspace);
     if (workspace) {
       if (!workspace.members) workspace.members = [];
@@ -59,9 +63,9 @@ const registerUser = async (req, res) => {
       await workspace.save();
     }
 
-    // ✅ UPDATE INVITE STATUS TO 'ACCEPTED'
+    // ✅ Mark invite as accepted
     invitation.status = 'accepted';
-    invitation.acceptedAt = new Date(); // Track when accepted
+    invitation.acceptedAt = new Date();
     await invitation.save();
 
     const token = generateToken(newUser._id);
@@ -72,7 +76,8 @@ const registerUser = async (req, res) => {
         id: newUser._id,
         name: newUser.name,
         email: newUser.email,
-        role: newUser.role
+        role: newUser.role,
+        isSSO: false
       },
       token
     });
@@ -82,23 +87,45 @@ const registerUser = async (req, res) => {
   }
 };
 
+// 🔑 Login: supports both password AND Google SSO
 const loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  const { email, password, googleId } = req.body;
 
+  try {
     const user = await Register.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+    // ✅ Handle Google SSO
+    if (googleId) {
+      if (!user.googleId) {
+        return res.status(400).json({ message: 'This account was not created with Google SSO' });
+      }
+      if (user.googleId !== googleId) {
+        return res.status(400).json({ message: 'Google ID mismatch' });
+      }
+      // SSO: no password check needed
     }
-      // ✅ UPDATE lastActive on successful login
+    // ✅ Handle password login
+    else if (password) {
+      if (user.googleId) {
+        return res.status(400).json({ message: 'This account uses Google SSO. Please log in with Google.' });
+      }
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Invalid credentials' });
+      }
+    }
+    // ❌ Neither provided
+    else {
+      return res.status(400).json({ message: 'Password or Google ID is required' });
+    }
+
+    // ✅ Update activity
     user.lastActive = new Date();
     user.isActive = true;
-    await user.save(); // or use findByIdAndUpdate to avoid full save
+    await user.save();
 
     const token = generateToken(user._id);
 
@@ -109,7 +136,7 @@ const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        lastActive: user.lastActive
+        isSSO: !!user.googleId
       },
       token
     });
@@ -119,9 +146,10 @@ const loginUser = async (req, res) => {
   }
 };
 
+// 👤 Get profile
 const getUserProfile = async (req, res) => {
   try {
-    const user = await Register.findById(req.user._id).select('-password');
+    const user = await Register.findById(req.user._id).select('-password -__v');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -132,8 +160,8 @@ const getUserProfile = async (req, res) => {
   }
 };
 
+// 🚪 Logout (client-side token removal for JWT)
 const logoutUser = (req, res) => {
-  // For JWT, real logout needs a denylist. For now, client-side token removal is enough.
   res.json({ message: 'Logged out successfully' });
 };
 
