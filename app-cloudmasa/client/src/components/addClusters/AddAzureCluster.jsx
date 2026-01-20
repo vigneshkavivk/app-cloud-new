@@ -16,11 +16,9 @@ import { useNavigate } from 'react-router-dom';
 
 export default function AddAzureCluster({ onClusterAdded = () => {} }) {
   const navigate = useNavigate();
-  useEffect(() => {
-  if (window.location.pathname !== '/sidebar/clusters/create/azure') {
-    navigate('/sidebar/clusters/create/azure', { replace: true });
-  }
-}, [navigate]);
+
+  // ✅ REMOVED THE BAD REDIRECT USEEFFECT
+
   const [accounts, setAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [clusters, setClusters] = useState([]);
@@ -169,13 +167,14 @@ export default function AddAzureCluster({ onClusterAdded = () => {} }) {
         }
       `}</style>
 
-      <div className="dashboard-root" style={{ marginLeft: '16rem' }}>
-        <div className="min-h-screen p-4 sm:p-6 md:p-8" style={{ marginLeft: '-16rem' }}>
+      {/* ✅ FIXED: Removed marginLeft hacks */}
+      <div className="dashboard-root">
+        <div className="min-h-screen p-4 sm:p-6 md:p-8 lg:ml-64">
           <div className="w-full">
             <div className="mb-6">
               <button
                 onClick={() => navigate('/sidebar/clusters')}
-                className="w-full flex items-center px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium"
+                className="w-half flex items-center px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium"
               >
                 <ArrowLeftCircle size={16} /> Back to Clusters
               </button>
@@ -183,12 +182,12 @@ export default function AddAzureCluster({ onClusterAdded = () => {} }) {
 
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center">
-                <Cloud size={24} className="text-peacock-400" />
-                <h1 className="text-xl font-bold red-orange-gradient-text">Azure AKS Cluster Manager</h1>
+                <Cloud size={24} className="text-peacock-400 gap-4" />
+                <h1 className="text-xl font-bold red-orange-gradient-text"> AKS Cluster Manager</h1>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               {/* Sidebar */}
               <div className="bg-gray-900/60 backdrop-blur-sm rounded-xl p-4 border border-gray-700 card-glow">
                 <div className="flex items-center mb-4">
@@ -265,7 +264,7 @@ export default function AddAzureCluster({ onClusterAdded = () => {} }) {
                   ) : (
                     <div className="space-y-2">
                       {[...addedClusters].map(name => (
-                        <div key={name} className="flex items-center  text-white">
+                        <div key={name} className="flex items-center text-white">
                           <Cloud size={14} className="text-peacock-400" />
                           <span>{name}</span>
                           <CheckCircle2 size={14} className="text-green-400" />
@@ -304,7 +303,7 @@ const AccountItem = ({ acc, selected, onSelect, onToggle }) => (
     }`}
     onClick={() => onSelect(acc)}
   >
-    <div className="flex items-center ">
+    <div className="flex items-center">
       <User size={14} className="text-gray-400" />
       <span className="text-sm text-white">{acc.accountName || acc.subscriptionId}</span>
     </div>
@@ -320,7 +319,7 @@ const AccountItem = ({ acc, selected, onSelect, onToggle }) => (
 const ClusterItem = ({ cluster, selected, added, onSelect, getStatusClass, getVersion, getNodeCount }) => (
   <div className={`p-3 rounded-lg border ${selected ? 'border-blue-500 bg-blue-500/10' : 'border-gray-700 bg-gray-800/50'}`}>
     <div className="flex items-center justify-between mb-2">
-      <div className="flex items-center ">
+      <div className="flex items-center">
         <Cloud size={14} className="text-peacock-400" />
         <span className="text-white font-medium">{cluster.name}</span>
       </div>
@@ -351,3 +350,4 @@ const ClusterItem = ({ cluster, selected, added, onSelect, getStatusClass, getVe
     </div>
   </div>
 );
+

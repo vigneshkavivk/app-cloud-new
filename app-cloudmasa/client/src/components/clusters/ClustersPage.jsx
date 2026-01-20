@@ -1,5 +1,4 @@
-// src/components/clusters/ClustersPage.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import AwsClustersPage from './AwsClustersPage';
 import AzureClustersPage from './AzureClustersPage';
 import GcpClustersPage from './GcpClustersPage';
@@ -7,6 +6,21 @@ import { Tab } from '@headlessui/react';
 
 const ClustersPage = () => {
   const providers = ['AWS Cloud', 'Azure Cloud', 'Google Cloud'];
+  const providerKeys = ['aws', 'azure', 'gcp']; // corresponds to providers
+
+  // Get initial tab from URL hash or default to Azure (index 1)
+  const getInitialTab = () => {
+    const hash = window.location.hash.slice(1); // e.g., "#azure" → "azure"
+    const index = providerKeys.indexOf(hash);
+    return index === -1 ? 1 : index; // fallback to Azure
+  };
+
+  const [selectedIndex, setSelectedIndex] = useState(getInitialTab());
+
+  // Sync tab selection to URL hash
+  useEffect(() => {
+    window.location.hash = providerKeys[selectedIndex];
+  }, [selectedIndex]);
 
   return (
     <>
@@ -150,31 +164,34 @@ const ClustersPage = () => {
         {/* ✅ Content Area — offset for sidebar */}
         <div className="min-h-screen p-6 sm:p-6 md:p-4 lg:ml-64">
           <div className="max-w-7xl mx-auto pt-6">
-            <Tab.Group defaultIndex={0}>
+            <Tab.Group
+              selectedIndex={selectedIndex}
+              onChange={setSelectedIndex}
+            >
               <Tab.List className="flex space-x-2 mb-6 border-b border-gray-700">
-                {providers.map((provider) => (
-                    <Tab
+                {providers.map((provider, idx) => (
+                  <Tab
                     key={provider}
                     className={({ selected }) =>
-                        `px-4 py-2.5 font-medium rounded-t-lg text-sm transition-colors ${
+                      `px-4 py-2.5 font-medium rounded-t-lg text-sm transition-colors ${
                         selected
-                            ? 'bg-gradient-to-r from-grey-500 to-black-500 text-white'
-                            : 'text-gray-400 hover:text-gray-200'
-                        }`
+                          ? 'bg-gradient-to-r from-grey-500 to-black-500 text-white'
+                          : 'text-gray-400 hover:text-gray-200'
+                      }`
                     }
-                    >
-                    {({ selected }) => (
-                        selected ? (
+                  >
+                    {({ selected }) =>
+                      selected ? (
                         <span className="bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent font-semibold">
-                            {provider}
+                          {provider}
                         </span>
-                        ) : (
+                      ) : (
                         provider
-                        )
-                    )}
-                    </Tab>
+                      )
+                    }
+                  </Tab>
                 ))}
-                </Tab.List>
+              </Tab.List>
 
               <Tab.Panels>
                 <Tab.Panel><AwsClustersPage /></Tab.Panel>
@@ -190,3 +207,4 @@ const ClustersPage = () => {
 };
 
 export default ClustersPage;
+

@@ -10,7 +10,8 @@ import {
   validateExistingAccount,
   getAksClusters,
   getAksClusterByName, // 👈 ADD THIS IMPORT
-  listVnets,      // ✅ Add this
+  listVnets,
+  updateAzureAccount,      // ✅ Add this
   listSubnets     // ✅ Add this
 } from '../controllers/azureController.js';
 
@@ -23,13 +24,12 @@ router.post('/validate-credentials', authenticate, validateAzureCredentials);
 router.get('/accounts', authenticate, getAzureAccounts);
 router.delete('/account/:id', authenticate, deleteAzureAccount);
 router.post('/validate-account', authenticate, validateExistingAccount);
-
-// List all AKS clusters (for dashboard)
 router.get('/aks-clusters', authenticate, getAksClusters);
 router.post('/aks-clusters', authenticate, getAksClusters);
 router.get('/vnets', listVnets);
 router.get('/subnets', listSubnets);
-// 👉 NEW: Get SINGLE cluster details by name (for popup)
+router.post('/update-account/:id', authenticate, updateAzureAccount);
 router.get('/aks-cluster/:name',getAksClusterByName); // ✅ CORRECT
 
 export default router;
+

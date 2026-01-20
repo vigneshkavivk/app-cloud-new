@@ -88,7 +88,7 @@ export const getAksClusters = async (req, res) => {
   }
 };
 
-// 👉 1. Validate Azure Credentials
+// �� 1. Validate Azure Credentials
 export const validateAzureCredentials = async (req, res) => {
   const { clientId, clientSecret, tenantId, subscriptionId, region, accountName } = req.body;
 
@@ -226,6 +226,7 @@ export const getAzureAccounts = async (req, res) => {
         tenantId: 1,
         region: 1,
         clientId: 1,
+        isFavorite: 1, 
       }
     ).lean();
 
@@ -236,6 +237,7 @@ export const getAzureAccounts = async (req, res) => {
       subscriptionId: acc.subscriptionId || '',
       tenantId: acc.tenantId || '',
       region: acc.region || 'global',
+      isFavorite: !!acc.isFavorite,
     }));
 
     res.json(formatted);
@@ -515,3 +517,41 @@ export const listSubnets = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch subnets' });
   }
 };
+
+// �� NEW: Update Azure Account (e.g., toggle favorite)
+export const updateAzureAccount = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isFavorite } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid account ID.' });
+    }
+
+    // Ensure user owns this account
+    const account = await AzureCredential.findOne({
+      _id: id,
+      createdBy: req.user?._id
+    });
+
+    if (!account) {
+      return res.status(404).json({ error: 'Account not found or access denied.' });
+    }
+
+    if (typeof isFavorite === 'boolean') {
+      account.isFavorite = isFavorite;
+      await account.save();
+    }
+
+    res.json({
+      message: '✅ Account updated successfully.',
+      isFavorite: account.isFavorite
+    });
+
+  } catch (error) {
+    console.error('Update Azure account error:', error);
+    res.status(500).json({ error: 'Failed to update account.' });
+  }
+};
+
+

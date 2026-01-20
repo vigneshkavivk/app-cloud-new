@@ -1,4 +1,3 @@
-// server/models/azureCredentialModel.js
 import mongoose from 'mongoose';
 import { encrypt, decrypt } from '../utils/encrypt.js';
 
@@ -43,18 +42,22 @@ const azureCredentialSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  resourceGroup: {
+    type: String,
+    required: true,
+    default: 'cloudmasa-rg',
+    trim: true,
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: false,
     index: true,
   },
-  // Add this field
-  resourceGroup: {
-    type: String,
-    required: true,
-    default: 'cloudmasa-rg',
-    trim: true
+  // 👇 NEW FIELD: Favorite toggle
+  isFavorite: {
+    type: Boolean,
+    default: false,
   },
 }, {
   timestamps: true,
@@ -63,7 +66,6 @@ const azureCredentialSchema = new mongoose.Schema({
 // Modern async pre-save middleware (recommended for Mongoose 6+)
 azureCredentialSchema.pre('save', async function () {
   // Only encrypt if clientSecret is modified AND is still a plain string
-  // (on first save it will be string; on updates it will already be encrypted object)
   if (this.isModified('clientSecret') && typeof this.clientSecret === 'string') {
     this.clientSecret = encrypt(this.clientSecret);
   }
@@ -94,3 +96,4 @@ azureCredentialSchema.methods.toJSON = function () {
 };
 
 export default mongoose.model('AzureCredential', azureCredentialSchema);
+

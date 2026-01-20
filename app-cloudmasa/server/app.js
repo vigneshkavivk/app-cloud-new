@@ -1,6 +1,9 @@
 // app.js
 import express from 'express';
 import cors from 'cors';
+import session from 'express-session';        // ✅ added
+import passport from 'passport';              // ✅ added
+import { configurePassport } from './config/passportConfig.js'; // ✅ added
 import { connectToDatabase } from './config/dbConfig.js';
 import errorHandler from './utils/errorHandler.js';
 import authenticate from './middleware/auth.js';
