@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Documentation</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="light-mode">
+    <!-- Header & Navigation -->
+    <header>
+        <div class="container">
+            <div class="logo">📄 Documentation</div>
+            <div class="nav-right">
+                <div class="search-box">
+                    <input type="text" placeholder="Search Ctrl+K">
+                    <span class="search-icon">🔍</span>
+                </div>
+                <button id="theme-toggle" aria-label="Toggle Dark/Light Mode">🌙</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <nav>
+            <section>
+                <h3>🚀 Get started</h3>
+                <ul>
+                    <li><a href="#">Installation</a></li>
+                    <li><a href="#">Fundamentals</a></li>
+                    <li><a href="#">First steps</a></li>
+                </ul>
+            </section>
+            <section>
+                <h3>💻 Develop</h3>
+                <ul>
+                    <li><a href="#">Concepts</a></li>
+                    <li><a href="#">API reference</a></li>
+                    <li><a href="#">Tutorials</a></li>
+                    <li><a href="#">Quick reference</a></li>
+                </ul>
+            </section>
+            <section>
+                <h3>☁️ Deploy</h3>
+                <ul>
+                    <li><a href="#">Concepts</a></li>
+                    <li><a href="#">Streamlit Community Cloud</a></li>
+                    <li><a href="#">Snowflake</a></li>
+                    <li><a href="#">Other platforms</a></li>
+                </ul>
+            </section>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="content">
+        <div class="breadcrumb">
+            <a href="#">Home</a> / <span>Get started</span>
+        </div>
+        <h1>Get started with MyApp</h1>
+        <p>This guide explains how MyApp works, how to install it on your preferred OS, and how to create your first app!</p>
+
+        <div class="card">
+            <div class="card-icon">⚙️</div>
+            <div class="card-content">
+                <h3><a href="#">Installation</a></h3>
+                <p>Helps you set up your development environment. Walk through installing MyApp on Windows, macOS, or Linux. Alternatively, code right in your browser with GitHub Codespaces or MyApp in Snowflake.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-icon">📚</div>
+            <div class="card-content">
+                <h3><a href="#">Fundamentals</a></h3>
+                <p>Introduces you to MyApp's data model and development flow. You'll learn what makes MyApp powerful: display and style data, draw charts and maps, add widgets, customize layouts, cache computation, and define themes.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-icon">✨</div>
+            <div class="card-content">
+                <h3><a href="#">First steps</a></h3>
+                <p>Walks you through creating apps using core features to fetch and cache data, draw charts, plot info on a map, and use interactive widgets to filter results.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-icon">🚀</div>
+            <div class="card-content">
+                <h3><a href="#">Use GitHub Codespaces</a></h3>
+                <p>If you want to skip local installation and code right in your browser. This guide uses MyApp Community Cloud to help you automatically configure a codespace.</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

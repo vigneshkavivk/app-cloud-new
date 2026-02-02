@@ -1,0 +1,285 @@
+/* === 🛡️ ANTI-DARK-FLASH: Enforce light background everywhere === */
+html,
+body,
+#__docusaurus {
+  background-color: #f8fafc !important;
+}
+
+:root {
+  --ifm-background-color: #f8fafc !important;
+  --ifm-background-surface-color: #ffffff !important;
+}
+
+.main-wrapper,
+.container,
+.theme-doc-markdown {
+  background-color: #f8fafc !important;
+}
+
+/* Prevent dark sidebar or footer bleed */
+.theme-doc-sidebar-container,
+.theme-doc-footer {
+  background-color: inherit !important;
+}
+
+
+/* === FORCE LIGHT THEME — OVERRIDE DARK MODE === */
+html[data-theme='dark'] {
+  --ifm-background-color: #f9fafb !important;
+  --ifm-font-color-base: #2d3748 !important;
+  --ifm-code-background: #f1f5f9 !important;
+  --ifm-navbar-background-color: white !important;
+  --ifm-sidebar-background-color: #f0f4ff !important;
+  --ifm-content-background-color: white !important;
+  --ifm-toc-background-color: #f8fafc !important;
+  --ifm-footer-background-color: #ffffff !important;
+  --ifm-menu-color-background-active: #4299e1 !important;
+  --ifm-menu-color-text: #2d3748 !important;
+  --ifm-menu-color-text-active: white !important;
+  --ifm-button-background-color: #4299e1 !important;
+  --ifm-button-background-color--hover: #2c5282 !important;
+}
+
+/* Also reset any potential dark-mode classes */
+html[data-theme='dark'] .theme-doc-markdown,
+html[data-theme='dark'] .docItemContainer,
+html[data-theme='dark'] .container {
+  background-color: white !important;
+  color: #2d3748 !important;
+}
+
+/* === Global Background & Text === */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.6;
+  color: #2d3748; /* Dark gray — easier on eyes than pure black */
+  background-color: #f9fafb; /* Light soft gray background */
+}
+
+/* === Headings === */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-weight: 600;
+  color: #1a202c; /* Near-black for strong headings */
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+h1 {
+  font-size: 2.5rem;
+  letter-spacing: -0.5px;
+}
+
+h2 {
+  font-size: 2rem;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+  color: #2d3748;
+}
+
+/* === Code Blocks === */
+pre {
+  background-color: #f1f5f9 !important;
+  border-radius: 8px;
+  padding: 1rem;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9rem;
+  overflow-x: auto;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+}
+
+code {
+  background-color: #edf2f7;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+/* === Links === */
+a {
+  color: #3182ce; /* Professional blue */
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: #2c5282;
+  text-decoration: underline;
+}
+
+/* === Sidebar === */
+.sidebar {
+  background: linear-gradient(160deg, #f0f4ff, #e6edff); /* Cool light-blue gradient */
+  border-right: 1px solid #cbd5e0;
+  width: 280px;
+  padding: 1rem 0;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.04);
+}
+
+.sidebar .menu {
+  padding: 0.5rem 1rem;
+}
+
+.sidebar .menu-item {
+  padding: 0.6rem 1rem;
+  margin: 0.3rem 0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  color: #2d3748;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.sidebar .menu-item.active {
+  background-color: #4299e1;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(66, 153, 225, 0.3);
+}
+
+.sidebar .menu-item:hover {
+  background-color: #ebf4ff;
+  color: #2b6cb0;
+}
+
+.sidebar .menu-category {
+  font-weight: 700;
+  color: #1a365d;
+  padding: 0.75rem 1rem 0.5rem;
+  margin: 1.2rem 0 0.6rem 0;
+  border-bottom: 2px solid #a0aec0;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-size: 0.85rem;
+  background: rgba(226, 232, 240, 0.4);
+  border-radius: 0 8px 8px 0;
+}
+
+.sidebar .menu-item > span {
+  font-size: 1.05rem;
+}
+
+/* === Navbar === */
+.navbar {
+  background-color: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.navbar .navbar-brand {
+  font-weight: 700;
+  color: #1a202c;
+}
+
+/* === Content Area === */
+.docItemContainer {
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  border: 1px solid #edf2f7;
+}
+
+/* === Blockquotes === */
+blockquote {
+  border-left: 4px solid #4299e1;
+  padding: 0.75rem 1rem;
+  margin: 1.25rem 0;
+  background-color: #ebf8ff;
+  border-radius: 0 6px 6px 0;
+  font-style: italic;
+  color: #2c5282;
+  font-size: 1.02rem;
+}
+
+/* === Tables === */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.25rem 0;
+  background-color: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  color: #2d3748;
+}
+
+th {
+  background-color: #f7fafc;
+  font-weight: 600;
+  color: #1a202c;
+}
+
+/* === Buttons === */
+.button {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+  background-color: #4299e1;
+  border: none;
+  box-shadow: 0 2px 4px rgba(66, 153, 225, 0.3);
+}
+
+.button--primary {
+  background-color: #3182ce;
+}
+
+.button--primary:hover {
+  background-color: #2c5282;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(66, 153, 225, 0.4);
+}
+
+/* === Emoji === */
+img.emoji {
+  height: 1em;
+  width: 1em;
+  margin: 0 0.1em;
+  vertical-align: -0.1em;
+}
+
+/* === GLOBAL RESET FOR CONTAINERS TO ENSURE LIGHT THEME === */
+.theme-doc-markdown {
+  background-color: white !important;
+  color: #2d3748 !important;
+}
+
+.container {
+  background-color: white !important;
+}
+
+.docItemContainer {
+  background-color: white !important;
+  color: #2d3748 !important;
+}
+
+.markdown > * {
+  background-color: transparent !important;
+  color: inherit !important;
+}
+
+/* Fix any remaining dark blocks */
+pre, code, table, td, th {
+  background-color: #f1f5f9 !important;
+  color: #1e293b !important;
+  border-color: #e2e8f0 !important;
+}
